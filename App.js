@@ -1,8 +1,16 @@
 import * as Location from "expo-location";
 import { useEffect, useState } from "react";
-import { ScrollView, Dimensions, StyleSheet, Text, View } from "react-native";
+import {
+  ScrollView,
+  Dimensions,
+  StyleSheet,
+  Text,
+  View,
+  ActivityIndicator,
+} from "react-native";
 import dayjs from "dayjs";
 import getEnvVars from "./environment";
+import { Fontisto } from "@expo/vector-icons";
 
 // 이전에 제공해주던 API 를 rn 의 확장을 위해 deprecated 하고
 // third-party 라이브러리에서 제공받도록 변경됐다. (ex. AsyncStorage)
@@ -14,6 +22,10 @@ import getEnvVars from "./environment";
 // 항상 반응형으로 레이아웃을 만들어야함 (레이아웃 스크린 사이즈는 다양하기 떄문)
 
 const API_KEY = getEnvVars().apiKey;
+
+const icons = {
+  Clouds: <Fontisto name="cloudy" size={36} color="black" />,
+};
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 export default function App() {
@@ -66,12 +78,19 @@ export default function App() {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
       >
-        {days.map((day) => (
-          <View key={day.dt_txt} style={styles.day}>
-            <Text style={styles.temp}>{dayjs(day.dt_txt).format("DD")}</Text>
-            <Text style={styles.description}>{day.main.temp}</Text>
+        {days.length === 0 ? (
+          <View style={styles.day}>
+            <ActivityIndicator size="large" />
           </View>
-        ))}
+        ) : (
+          days.map((day) => (
+            <View key={day.dt_txt} style={styles.day}>
+              {icons.Clouds}
+              <Text style={styles.temp}>{dayjs(day.dt_txt).format("DD")}</Text>
+              <Text style={styles.description}>{day.main.temp.toFixed(1)}</Text>
+            </View>
+          ))
+        )}
       </ScrollView>
     </View>
   );
