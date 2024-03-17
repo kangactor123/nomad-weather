@@ -1,6 +1,8 @@
 import * as Location from "expo-location";
 import { useEffect, useState } from "react";
 import { ScrollView, Dimensions, StyleSheet, Text, View } from "react-native";
+import dayjs from "dayjs";
+import getEnvVars from "./environment";
 
 // 이전에 제공해주던 API 를 rn 의 확장을 위해 deprecated 하고
 // third-party 라이브러리에서 제공받도록 변경됐다. (ex. AsyncStorage)
@@ -11,15 +13,16 @@ import { ScrollView, Dimensions, StyleSheet, Text, View } from "react-native";
 // flex-direction default is column
 // 항상 반응형으로 레이아웃을 만들어야함 (레이아웃 스크린 사이즈는 다양하기 떄문)
 
+const API_KEY = getEnvVars().apiKey;
+
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 export default function App() {
   const [city, setCity] = useState("Loading...");
-  const [location, setLocation] = useState(null);
+  const [days, setDays] = useState([]);
   const [ok, setOk] = useState(true);
 
-  const ask = async () => {
+  const getWeather = async () => {
     const { granted } = await Location.requestForegroundPermissionsAsync();
-    // setOk(permission.granted);
     if (!granted) {
       setOk(false);
     }
@@ -35,12 +38,22 @@ export default function App() {
       { useGoogleMaps: false }
     );
     setCity(location[0].city);
-    setLocation(location);
+    const data = await fetch(
+      `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric`
+    ).then((res) => res.json());
+
+    const days = data.list.map((forecast) => ({
+      dt_txt: forecast.dt_txt,
+      main: forecast.main,
+    }));
+
+    setDays(days);
   };
 
   useEffect(() => {
-    ask();
+    getWeather();
   }, []);
+
   return (
     <View style={styles.container}>
       <View style={styles.city}>
@@ -53,22 +66,12 @@ export default function App() {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
       >
-        <View style={styles.day}>
-          <Text style={styles.temp}>27</Text>
-          <Text style={styles.description}>Sunny</Text>
-        </View>
-        <View style={styles.day}>
-          <Text style={styles.temp}>27</Text>
-          <Text style={styles.description}>Sunny</Text>
-        </View>
-        <View style={styles.day}>
-          <Text style={styles.temp}>27</Text>
-          <Text style={styles.description}>Sunny</Text>
-        </View>
-        <View style={styles.day}>
-          <Text style={styles.temp}>27</Text>
-          <Text style={styles.description}>Sunny</Text>
-        </View>
+        {days.map((day) => (
+          <View key={day.dt_txt} style={styles.day}>
+            <Text style={styles.temp}>{dayjs(day.dt_txt).format("DD")}</Text>
+            <Text style={styles.description}>{day.main.temp}</Text>
+          </View>
+        ))}
       </ScrollView>
     </View>
   );
@@ -100,7 +103,7 @@ const styles = StyleSheet.create({
     fontSize: 168,
   },
   description: {
-    marginTop: -20,
+    // marginTop: -20,
     fontSize: 60,
   },
 });
