@@ -1,3 +1,5 @@
+import * as Location from "expo-location";
+import { useEffect, useState } from "react";
 import { ScrollView, Dimensions, StyleSheet, Text, View } from "react-native";
 
 // 이전에 제공해주던 API 를 rn 의 확장을 위해 deprecated 하고
@@ -11,10 +13,38 @@ import { ScrollView, Dimensions, StyleSheet, Text, View } from "react-native";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 export default function App() {
+  const [city, setCity] = useState("Loading...");
+  const [location, setLocation] = useState(null);
+  const [ok, setOk] = useState(true);
+
+  const ask = async () => {
+    const { granted } = await Location.requestForegroundPermissionsAsync();
+    // setOk(permission.granted);
+    if (!granted) {
+      setOk(false);
+    }
+
+    const {
+      coords: { latitude, longitude },
+    } = await Location.getCurrentPositionAsync({ accuracy: 5 });
+    const location = await Location.reverseGeocodeAsync(
+      {
+        latitude,
+        longitude,
+      },
+      { useGoogleMaps: false }
+    );
+    setCity(location[0].city);
+    setLocation(location);
+  };
+
+  useEffect(() => {
+    ask();
+  }, []);
   return (
     <View style={styles.container}>
       <View style={styles.city}>
-        <Text style={styles.cityName}>Seoul</Text>
+        <Text style={styles.cityName}>{city}</Text>
       </View>
       {/* ScrollView 에 style 을 넣고싶다면 contentContainerStyle */}
       <ScrollView
